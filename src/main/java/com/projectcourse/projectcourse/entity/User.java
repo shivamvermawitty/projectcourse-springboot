@@ -1,11 +1,15 @@
 package com.projectcourse.projectcourse.entity;
 
+import static jakarta.persistence.EnumType.STRING;
+
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.projectcourse.projectcourse.enums.Role;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,11 +28,13 @@ import lombok.Setter;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer userId;
+    private Long userId;
     private String name;
     private String email;
     private String password;
-    private String role;
+
+    @Enumerated(STRING)
+    private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonManagedReference("user-enrollments")
