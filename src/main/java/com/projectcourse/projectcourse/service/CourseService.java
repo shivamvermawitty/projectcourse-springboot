@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionSystemException;
 
+import com.projectcourse.projectcourse.dto.CourseDTO;
 import com.projectcourse.projectcourse.entity.Course;
 import com.projectcourse.projectcourse.entity.Lecture;
 import com.projectcourse.projectcourse.entity.User;
@@ -36,25 +37,21 @@ public class CourseService {
     @Autowired
     private LectureRepository lectureRepository;
 
-    
-
-    public ResponseEntity<?> getAll() {
+    public List<CourseDTO> findAllCourses() {
         try {
             List<Course> courses = courseRepository.findAll();
-            
-
 
             if (courses.isEmpty()) {
-                throw new CustomException("Course Not Found" ,404 );
+                throw new CustomException("Course Not Found", 404);
             }
 
-            return ResponseEntity.ok(courses);
+            return courses.stream().map(CourseDTO::new).toList();
 
         } catch (UnauthorizedException e) {
-            throw new CustomException("You are not authorized" ,401 );
+            throw new CustomException("You are not authorized", 401);
 
         } catch (ForbiddenException e) {
-            throw new CustomException("Access is forbidden" ,402 );
+            throw new CustomException("Access is forbidden", 402);
         }
     }
 
@@ -62,16 +59,16 @@ public class CourseService {
         token = token.substring(7);
         String email = jwtService.extractUsername(token);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException("No such user found" ,404 ));
+                .orElseThrow(() -> new CustomException("No such user found", 404));
         course.setInstructorId(user.getUserId());
         try {
             return ResponseEntity.ok(courseRepository.save(course));
         } catch (DataIntegrityViolationException ex) {
-            throw new CustomException("User is Already Enrolled" ,409 );
+            throw new CustomException("User is Already Enrolled", 409);
         } catch (TransactionSystemException ex) {
-            throw new CustomException("Invalid Transaction" ,409 );
+            throw new CustomException("Invalid Transaction", 409);
         } catch (DataAccessResourceFailureException ex) {
-            throw new CustomException("Database Connection failed" ,509 );
+            throw new CustomException("Database Connection failed", 509);
         }
     }
 
@@ -79,11 +76,13 @@ public class CourseService {
         try {
             return ResponseEntity.ok(courseRepository.findById(id));
         } catch (Exception e) {
-            throw new CustomException("No Course Found" ,404 );        }
+            throw new CustomException("No Course Found", 404);
+        }
     }
 
     public ResponseEntity<?> modifyCourse(Course course, Integer id) {
-        Course existingCourse = courseRepository.findById(id).orElseThrow(() -> new CustomException("No User Found" ,404 ));
+        Course existingCourse = courseRepository.findById(id)
+                .orElseThrow(() -> new CustomException("No User Found", 404));
         if (course.getDescription() != null)
             existingCourse.setDescription(course.getDescription());
         if (course.getInstructorId() != null)
@@ -101,7 +100,7 @@ public class CourseService {
                 if (lecture.getId() != null) {
                     Lecture managedLecture = lectureRepository.findById(lecture.getId())
                             .orElseThrow(
-                                    () -> new CustomException("Lecture Not Found" ,404));
+                                    () -> new CustomException("Lecture Not Found", 404));
                     managedLecture.setDescription(lecture.getDescription());
                     managedLecture.setThumbnail(lecture.getThumbnail());
                     managedLecture.setTitle(lecture.getTitle());
@@ -120,7 +119,7 @@ public class CourseService {
             courseRepository.deleteById(id);
             return ResponseEntity.ok(new Success("Course deleted successfully."));
         } catch (EmptyResultDataAccessException ex) {
-            throw new CustomException("Course with id " + id + " not found." ,404 );
+            throw new CustomException("Course with id " + id + " not found.", 404);
         }
     }
 

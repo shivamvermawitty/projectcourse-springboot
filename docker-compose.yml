@@ -1,0 +1,27 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: projectcourse-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: Shivam@Witty
+      MYSQL_DATABASE: projectcourse
+      MYSQL_USER: projectuser
+      MYSQL_PASSWORD: projectpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - projectcourse-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  projectcourse-network:
+    driver: bridge

@@ -30,7 +30,7 @@ public class User {
     private String password;
     private String role;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonManagedReference("user-enrollments")
     private List<Enrollment> enrolled;
 }
