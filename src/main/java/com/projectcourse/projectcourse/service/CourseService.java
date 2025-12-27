@@ -60,7 +60,7 @@ public class CourseService {
         String email = jwtService.extractUsername(token);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No such user found", 404));
-        course.setInstructorId(user.getUserId());
+        course.setInstructorId(user.getId());
         try {
             return ResponseEntity.ok(courseRepository.save(course));
         } catch (DataIntegrityViolationException ex) {
@@ -72,7 +72,7 @@ public class CourseService {
         }
     }
 
-    public ResponseEntity<?> fetchACourse(Integer id) {
+    public ResponseEntity<?> fetchACourse(Long id) {
         try {
             return ResponseEntity.ok(courseRepository.findById(id));
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class CourseService {
         }
     }
 
-    public ResponseEntity<?> modifyCourse(Course course, Integer id) {
+    public ResponseEntity<?> modifyCourse(Course course, Long id) {
         Course existingCourse = courseRepository.findById(id)
                 .orElseThrow(() -> new CustomException("No User Found", 404));
         if (course.getDescription() != null)
@@ -114,7 +114,7 @@ public class CourseService {
         return ResponseEntity.ok(courseRepository.save(existingCourse));
     }
 
-    public ResponseEntity<?> deleteCourse(Integer id) {
+    public ResponseEntity<?> deleteCourse(Long id) {
         try {
             courseRepository.deleteById(id);
             return ResponseEntity.ok(new Success("Course deleted successfully."));

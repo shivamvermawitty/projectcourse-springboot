@@ -68,14 +68,14 @@ public class UserService {
 
     }
 
-    public Register updateUser(User user, Integer userId) {
+    public Register updateUser(User user, Long userId) {
         User existingUser = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         ;
 
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             User userWithEmail = userRepository.findByEmail(user.getEmail())
                     .orElseThrow(() -> new RuntimeException("No user with given email"));
-            if (!userId.equals(userWithEmail.getUserId())) {
+            if (!userId.equals(userWithEmail.getId())) {
                 return new Register("User with email " + user.getEmail() + " already exists", user);
             }
 
@@ -101,7 +101,13 @@ public class UserService {
         return ResponseEntity.ok(users);
     }
 
-    public ResponseEntity<?> deleteUser(Integer id) {
+    public ResponseEntity<?> getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new CustomException("User not found", 404));
+        return ResponseEntity.ok(user);
+    }
+
+    public ResponseEntity<?> deleteUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new CustomException("User does not exist" ,404 ));
         userRepository.deleteById(id);
         return ResponseEntity.ok(user);
@@ -117,7 +123,7 @@ public class UserService {
         }
     }
 
-    public ResponseEntity<?> getEnrolledUser(String token, Integer id) {
+    public ResponseEntity<?> getEnrolledUser(String token, Long id) {
         try {
             Course course = courseRepository.findById(id).orElseThrow(() -> new CustomException("Course not Found" ,404 ));
             List<User> enrolledUser = course.getEnrollments()

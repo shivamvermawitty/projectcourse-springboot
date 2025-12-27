@@ -20,13 +20,35 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
+@RequestMapping("/user")
 @RestController
 public class userController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/user/add-user")
+    @GetMapping
+    public ResponseEntity<?> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        return userService.getUserById(id);
+    }
+
+    @PostMapping
+    public ResponseEntity<Register> createUser(@RequestBody User user) {
+        Register register = userService.saveUser(user);
+
+        HttpStatus status = "User Created Successfully".equals(register.getMessage()) ? HttpStatus.OK
+                : HttpStatus.CONFLICT;
+
+        return ResponseEntity.status(status).body(register);
+    }
+
+    @PostMapping("/add-user")
     public ResponseEntity<Register> addUser(@RequestBody User user) {
         Register register = userService.saveUser(user);
 
@@ -36,8 +58,18 @@ public class userController {
         return ResponseEntity.status(status).body(register);
     }
 
-    @PutMapping("/user/update/{id}")
-    public ResponseEntity<Register> updateUser(@PathVariable Integer id, @RequestBody User user) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Register> updateUser(@PathVariable Long id, @RequestBody User user) {
+        Register register = userService.updateUser(user, id);
+
+        HttpStatus status = "User updated Successfully".equals(register.getMessage()) ? HttpStatus.OK
+                : HttpStatus.CONFLICT;
+
+        return ResponseEntity.status(status).body(register);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Register> updateUserLegacy(@PathVariable Long id, @RequestBody User user) {
         Register register = userService.updateUser(user, id);
 
         HttpStatus status = "User updated Successfully".equals(register.getMessage()) ? HttpStatus.OK
@@ -55,17 +87,12 @@ public class userController {
         return ResponseEntity.status(status).body(login);
     }
 
-    @GetMapping("/user/getAll")
-    public ResponseEntity<?> getUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
-    }
-
-    @DeleteMapping("user/delete/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.deleteUser(id));
     }
 
-    @GetMapping("user/enrolledCourse")
+    @GetMapping("/enrolled-courses")
     public ResponseEntity<?> getEnrolledCourse(HttpServletRequest request) {
         String token = Util.getToken(request);
 
@@ -76,8 +103,8 @@ public class userController {
         return ResponseEntity.ok(userService.getEnrolledCourses(token));
     }
 
-    @GetMapping("user/enrolledUser/{id}")
-    public ResponseEntity<?> getEnrolledUser(@PathVariable Integer id, HttpServletRequest request) {
+    @GetMapping("/enrolled-users/{id}")
+    public ResponseEntity<?> getEnrolledUser(@PathVariable Long id, HttpServletRequest request) {
 
         String token = Util.getToken(request);
 

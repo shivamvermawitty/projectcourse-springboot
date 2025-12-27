@@ -9,24 +9,22 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@SequenceGenerator(name = "entity_seq_gen", sequenceName = "course_sequence", allocationSize = 1)
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class Course {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer courseId;
+public class Course extends BaseEntity {
     private String title;
-    private Integer instructorId;
+    private Long instructorId;
     @Column(length = 5000)
     private String description;
 

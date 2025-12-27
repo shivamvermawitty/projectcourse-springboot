@@ -44,19 +44,19 @@ public class CourseController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'TEACHER')")
-    public ResponseEntity<?> getMethodName(@PathVariable Integer id) {
+    public ResponseEntity<?> getMethodName(@PathVariable Long id) {
         return courseService.fetchACourse(id);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('TEACHER')")
-    public ResponseEntity<?> updateCourse(@PathVariable Integer id, @RequestBody Course course) {
+    public ResponseEntity<?> updateCourse(@PathVariable Long id, @RequestBody Course course) {
         return courseService.modifyCourse(course, id);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('TEACHER')")
-    public ResponseEntity<?> courseDelete(@PathVariable Integer id) {
+    public ResponseEntity<?> courseDelete(@PathVariable Long id) {
         return courseService.deleteCourse(id);
     }
 
