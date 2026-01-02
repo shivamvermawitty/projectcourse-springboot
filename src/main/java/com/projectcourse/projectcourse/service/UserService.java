@@ -16,7 +16,7 @@ import com.projectcourse.projectcourse.entity.Course;
 import com.projectcourse.projectcourse.entity.Enrollment;
 import com.projectcourse.projectcourse.entity.User;
 import com.projectcourse.projectcourse.exception.CustomException;
-import com.projectcourse.projectcourse.helper.ResponseHelper;
+import static com.projectcourse.projectcourse.helper.ResponseHelper.createFailedResponse;
 import com.projectcourse.projectcourse.helper.Util;
 import com.projectcourse.projectcourse.repository.CourseRepository;
 import com.projectcourse.projectcourse.repository.UserRepository;
@@ -111,7 +111,7 @@ public class UserService {
     public ResponseEntity<?> getUserById(Long id , HttpServletRequest request) {
         String token= Util.getToken(request);
         User loggedInUser =getUserByToken(token);
-        if(loggedInUser.getId()!=id) return ResponseHelper.createFailedResponse(new FailedResponse("You are not authorized to access this user"),HttpStatus.FORBIDDEN);
+        if(loggedInUser.getId()!=id) return createFailedResponse(new FailedResponse("You are not authorized to access this user"),HttpStatus.FORBIDDEN);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new CustomException("User not found", 404));
         return ResponseEntity.ok(user);
