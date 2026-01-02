@@ -63,13 +63,8 @@ public class JWTFilter extends OncePerRequestFilter {
                 // Build authority
                 SimpleGrantedAuthority authority =
                         new SimpleGrantedAuthority("ROLE_" + role.toUpperCase());
-
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                List.of(authority)
-                        );
+                        
+                UsernamePasswordAuthenticationToken authToken =new UsernamePasswordAuthenticationToken(userDetails,null,List.of(authority));
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 

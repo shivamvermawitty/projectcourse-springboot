@@ -2,6 +2,7 @@ package com.projectcourse.projectcourse.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.projectcourse.projectcourse.entity.Lecture;
@@ -22,28 +23,35 @@ public class LectureController {
     @Autowired
     private LectureService lectureService;
 
-    @GetMapping
-    public ResponseEntity<?> getAllLectures() {
-        return lectureService.getAll();
-    }
+    //  This is useless route
+    // @GetMapping
+    // public ResponseEntity<?> getAllLectures() {
+    //     return lectureService.getAll();
+    // }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'TEACHER' , 'STUDENT')")
     public ResponseEntity<?> getLectureById(@PathVariable Long id) {
         return lectureService.getLectureById(id);
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('TEACHER')")
     public ResponseEntity<?> createLecture(@RequestBody Lecture lecture) {
         return lectureService.createLecture(lecture);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('TEACHER')")
     public ResponseEntity<?> updateLecture(@PathVariable Long id, @RequestBody Lecture lecture) {
         return lectureService.updateLecture(id, lecture);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('TEACHER')")
     public ResponseEntity<?> deleteLecture(@PathVariable Long id) {
         return lectureService.deleteLecture(id);
     }
+
+
 }

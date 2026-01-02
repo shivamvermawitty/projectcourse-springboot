@@ -2,16 +2,14 @@ package com.projectcourse.projectcourse.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import com.projectcourse.projectcourse.dto.CourseDTO;
 import com.projectcourse.projectcourse.entity.Course;
-import com.projectcourse.projectcourse.response.ApiResponse;
+import com.projectcourse.projectcourse.entity.Lecture;
 import com.projectcourse.projectcourse.service.CourseService;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import static com.projectcourse.projectcourse.helper.ResponseHelper.*;
-
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,7 +29,7 @@ public class CourseController {
     private CourseService courseService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'TEACHER' , 'STUDENT')")
     public ResponseEntity<?> getMethodName() {
         return createSuccessResponse("Courses retrieved successfully", courseService.findAllCourses());
     }
@@ -43,21 +41,28 @@ public class CourseController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'TEACHER' , 'STUDENT')")
     public ResponseEntity<?> getMethodName(@PathVariable Long id) {
         return courseService.fetchACourse(id);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('TEACHER')")
-    public ResponseEntity<?> updateCourse(@PathVariable Long id, @RequestBody Course course) {
-        return courseService.modifyCourse(course, id);
+    public ResponseEntity<?> updateCourse(@PathVariable Long id, @RequestBody Course course , HttpServletRequest request) {
+        return courseService.modifyCourse(course, id , request);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('TEACHER')")
+    @PreAuthorize("hasRole('TEACHER','ADMIN')")
     public ResponseEntity<?> courseDelete(@PathVariable Long id) {
         return courseService.deleteCourse(id);
     }
+
+    @PostMapping("/add-lecture/{id}")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<?> postMethodName(@RequestBody Lecture lecture , @PathVariable Long id , HttpServletRequest request  ) {
+        return courseService.addLectureToCourse(lecture , id ,request );
+    }
+    
 
 }

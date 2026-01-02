@@ -1,8 +1,10 @@
 package com.projectcourse.projectcourse.service;
 
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,10 +16,15 @@ import com.projectcourse.projectcourse.entity.Course;
 import com.projectcourse.projectcourse.entity.Enrollment;
 import com.projectcourse.projectcourse.entity.User;
 import com.projectcourse.projectcourse.exception.CustomException;
+import com.projectcourse.projectcourse.helper.ResponseHelper;
+import com.projectcourse.projectcourse.helper.Util;
 import com.projectcourse.projectcourse.repository.CourseRepository;
 import com.projectcourse.projectcourse.repository.UserRepository;
+import com.projectcourse.projectcourse.response.FailedResponse;
 import com.projectcourse.projectcourse.response.Login;
 import com.projectcourse.projectcourse.response.Register;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class UserService {
@@ -101,7 +108,10 @@ public class UserService {
         return ResponseEntity.ok(users);
     }
 
-    public ResponseEntity<?> getUserById(Long id) {
+    public ResponseEntity<?> getUserById(Long id , HttpServletRequest request) {
+        String token= Util.getToken(request);
+        User loggedInUser =getUserByToken(token);
+        if(loggedInUser.getId()!=id) return ResponseHelper.createFailedResponse(new FailedResponse("You are not authorized to access this user"),HttpStatus.FORBIDDEN);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new CustomException("User not found", 404));
         return ResponseEntity.ok(user);

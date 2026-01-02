@@ -1,5 +1,8 @@
 package com.projectcourse.projectcourse.service;
 
+import static com.projectcourse.projectcourse.helper.ResponseHelper.createFailedResponse;
+import static com.projectcourse.projectcourse.helper.ResponseHelper.createResponse;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionSystemException;
@@ -18,10 +22,14 @@ import com.projectcourse.projectcourse.entity.User;
 import com.projectcourse.projectcourse.exception.CustomException;
 import com.projectcourse.projectcourse.exception.ForbiddenException;
 import com.projectcourse.projectcourse.exception.UnauthorizedException;
+import com.projectcourse.projectcourse.helper.Util;
 import com.projectcourse.projectcourse.repository.CourseRepository;
 import com.projectcourse.projectcourse.repository.LectureRepository;
 import com.projectcourse.projectcourse.repository.UserRepository;
+import com.projectcourse.projectcourse.response.ApiResponse;
+import com.projectcourse.projectcourse.response.FailedResponse;
 import com.projectcourse.projectcourse.response.Success;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class CourseService {
@@ -36,6 +44,20 @@ public class CourseService {
 
     @Autowired
     private LectureRepository lectureRepository;
+
+    public User getUserByRequest(HttpServletRequest request) {
+        String token=Util.getToken(request);
+        String email = jwtService.extractUsername(token);
+        User user = userRepository.findByEmail(email).orElseThrow(() ->new CustomException("User Not Found" ,404 ));
+        return user;
+
+    }
+
+    public Course getCourseByCourseId(Long id){
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new CustomException("No Course Found", 404));
+        return course;
+    }
 
     public List<CourseDTO> findAllCourses() {
         try {
@@ -80,9 +102,10 @@ public class CourseService {
         }
     }
 
-    public ResponseEntity<?> modifyCourse(Course course, Long id) {
-        Course existingCourse = courseRepository.findById(id)
-                .orElseThrow(() -> new CustomException("No User Found", 404));
+    public ResponseEntity<?> modifyCourse(Course course, Long id , HttpServletRequest request) {
+        User user= getUserByRequest(request);
+        if(course.getInstructorId()!=user.getId()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new FailedResponse("NOt Authorized to edit this course"));
+        Course existingCourse = getCourseByCourseId(id);
         if (course.getDescription() != null)
             existingCourse.setDescription(course.getDescription());
         if (course.getInstructorId() != null)
@@ -121,6 +144,15 @@ public class CourseService {
         } catch (EmptyResultDataAccessException ex) {
             throw new CustomException("Course with id " + id + " not found.", 404);
         }
+    }
+
+    public ResponseEntity<?> addLectureToCourse(Lecture lecture, Long courseId , HttpServletRequest request) {
+        User user= getUserByRequest(request);
+        Course course=getCourseByCourseId(courseId);
+        if(user.getId()!=course.getInstructorId()) return createFailedResponse(new FailedResponse("User unauthorized to add course") , HttpStatus.FORBIDDEN);
+        lecture.setCourse(course);
+        course.getLectures().add(lecture);
+        return createResponse(new ApiResponse<>("Lecture Successfully", courseRepository.save(course)), HttpStatus.OK);    
     }
 
 }

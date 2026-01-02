@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,13 +30,14 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN' , 'TEACHER')")
     public ResponseEntity<?> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public ResponseEntity<?> getUserById(@PathVariable Long id , HttpServletRequest request) {
+        return userService.getUserById(id , request);
     }
 
     @PostMapping
@@ -47,6 +49,7 @@ public class UserController {
 
         return ResponseEntity.status(status).body(register);
     }
+
 
     @PostMapping("/add-user")
     public ResponseEntity<Register> addUser(@RequestBody User user) {
@@ -68,15 +71,16 @@ public class UserController {
         return ResponseEntity.status(status).body(register);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<Register> updateUserLegacy(@PathVariable Long id, @RequestBody User user) {
-        Register register = userService.updateUser(user, id);
+    // Of no use
+    // @PutMapping("/update/{id}")
+    // public ResponseEntity<Register> updateUserLegacy(@PathVariable Long id, @RequestBody User user) {
+    //     Register register = userService.updateUser(user, id);
 
-        HttpStatus status = "User updated Successfully".equals(register.getMessage()) ? HttpStatus.OK
-                : HttpStatus.CONFLICT;
+    //     HttpStatus status = "User updated Successfully".equals(register.getMessage()) ? HttpStatus.OK
+    //             : HttpStatus.CONFLICT;
 
-        return ResponseEntity.status(status).body(register);
-    }
+    //     return ResponseEntity.status(status).body(register);
+    // }
 
     @PostMapping("/login")
     public ResponseEntity<Login> login(@RequestBody User user) {
@@ -93,6 +97,7 @@ public class UserController {
     }
 
     @GetMapping("/enrolled-courses")
+    @PreAuthorize("hasAnyRole('STUDENT')")
     public ResponseEntity<?> getEnrolledCourse(HttpServletRequest request) {
         String token = Util.getToken(request);
 
