@@ -34,7 +34,6 @@ public class LectureService {
     public ResponseEntity<?> updateLecture(Long id, Lecture lectureDetails) {
         Lecture lecture = lectureRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Lecture not found", 404));
-        
         if (lectureDetails.getTitle() != null) {
             lecture.setTitle(lectureDetails.getTitle());
         }

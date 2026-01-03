@@ -30,7 +30,7 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN' , 'TEACHER')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> getAllUsers() {
         return userService.getAllUsers();
     }
@@ -87,6 +87,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.deleteUser(id));
     }
@@ -94,9 +95,6 @@ public class UserController {
     @GetMapping("/enrolled-courses")
     @PreAuthorize("hasAnyRole('STUDENT')")
     public ResponseEntity<?> getEnrolledCourse(HttpServletRequest request) {
-
-            
-
         return userService.getEnrolledCourses(request);
     }
 

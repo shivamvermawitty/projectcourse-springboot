@@ -22,6 +22,7 @@ import com.projectcourse.projectcourse.entity.User;
 import com.projectcourse.projectcourse.exception.CustomException;
 import com.projectcourse.projectcourse.exception.ForbiddenException;
 import com.projectcourse.projectcourse.exception.UnauthorizedException;
+import com.projectcourse.projectcourse.helper.ResponseHelper;
 import com.projectcourse.projectcourse.helper.Util;
 import com.projectcourse.projectcourse.repository.CourseRepository;
 import com.projectcourse.projectcourse.repository.LectureRepository;
@@ -59,15 +60,15 @@ public class CourseService {
         return course;
     }
 
-    public List<CourseDTO> findAllCourses() {
+    public ResponseEntity<?> findAllCourses() {
         try {
             List<Course> courses = courseRepository.findAll();
 
             if (courses.isEmpty()) {
                 throw new CustomException("Course Not Found", 404);
             }
-
-            return courses.stream().map(CourseDTO::new).toList();
+            List<CourseDTO> courseList=courses.stream().map(CourseDTO::new).toList();
+            return ResponseHelper.createResponse(new ApiResponse<>("Data fetched successfully", courseList), HttpStatus.OK) ;
 
         } catch (UnauthorizedException e) {
             throw new CustomException("You are not authorized", 401);
@@ -77,11 +78,8 @@ public class CourseService {
         }
     }
 
-    public ResponseEntity<?> addCourse(Course course, String token) {
-        token = token.substring(7);
-        String email = jwtService.extractUsername(token);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException("No such user found", 404));
+    public ResponseEntity<?> addCourse(Course course, HttpServletRequest request) {
+        User user=getUserByRequest(request);
         course.setInstructorId(user.getId());
         try {
             return ResponseEntity.ok(courseRepository.save(course));
@@ -104,7 +102,7 @@ public class CourseService {
 
     public ResponseEntity<?> modifyCourse(Course course, Long id , HttpServletRequest request) {
         User user= getUserByRequest(request);
-        if(course.getInstructorId()!=user.getId()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new FailedResponse("NOt Authorized to edit this course"));
+        if(course.getInstructorId()!=user.getId()) return ResponseHelper.createFailedResponse(new FailedResponse("You are not authorized to update this course"), HttpStatus.FORBIDDEN);
         Course existingCourse = getCourseByCourseId(id);
         if (course.getDescription() != null)
             existingCourse.setDescription(course.getDescription());
@@ -152,7 +150,7 @@ public class CourseService {
         if(user.getId()!=course.getInstructorId()) return createFailedResponse(new FailedResponse("User unauthorized to add course") , HttpStatus.FORBIDDEN);
         lecture.setCourse(course);
         course.getLectures().add(lecture);
-        return createResponse(new ApiResponse<>("Lecture Successfully", courseRepository.save(course)), HttpStatus.OK);    
+        return createResponse(new ApiResponse<Course>("Lecture Successfully", courseRepository.save(course)), HttpStatus.OK);    
     }
 
 }

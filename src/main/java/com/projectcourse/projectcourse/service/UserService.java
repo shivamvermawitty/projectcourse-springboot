@@ -82,7 +82,7 @@ public class UserService {
         User loggedInUser=getUserByRequest(request);
         User existingUser = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         ;
-        if(loggedInUser.getId()!=userId) return ResponseHelper.createFailedResponse(new FailedResponse("You are not authorized to update this user"),HttpStatus.FORBIDDEN);
+        if(loggedInUser.getId()!=userId && !loggedInUser.getRole().equals(Role.ADMIN)) return ResponseHelper.createFailedResponse(new FailedResponse("You are not authorized to update this user"),HttpStatus.FORBIDDEN);
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             User userWithEmail = userRepository.findByEmail(user.getEmail())
                     .orElseThrow(() -> new RuntimeException("No user with given email"));
