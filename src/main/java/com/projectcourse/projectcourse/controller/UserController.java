@@ -62,13 +62,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Register> updateUser(@PathVariable Long id, @RequestBody User user) {
-        Register register = userService.updateUser(user, id);
-
-        HttpStatus status = "User updated Successfully".equals(register.getMessage()) ? HttpStatus.OK
-                : HttpStatus.CONFLICT;
-
-        return ResponseEntity.status(status).body(register);
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User user , HttpServletRequest request) {
+        return userService.updateUser(user, id , request);
     }
 
     // Of no use
@@ -99,13 +94,10 @@ public class UserController {
     @GetMapping("/enrolled-courses")
     @PreAuthorize("hasAnyRole('STUDENT')")
     public ResponseEntity<?> getEnrolledCourse(HttpServletRequest request) {
-        String token = Util.getToken(request);
 
-        if (token == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new FailedResponse("Invalid token"));
+            
 
-        return ResponseEntity.ok(userService.getEnrolledCourses(token));
+        return userService.getEnrolledCourses(request);
     }
 
     @GetMapping("/enrolled-users/{id}")

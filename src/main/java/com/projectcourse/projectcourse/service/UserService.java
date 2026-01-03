@@ -15,11 +15,13 @@ import org.springframework.stereotype.Service;
 import com.projectcourse.projectcourse.entity.Course;
 import com.projectcourse.projectcourse.entity.Enrollment;
 import com.projectcourse.projectcourse.entity.User;
+import com.projectcourse.projectcourse.enums.Role;
 import com.projectcourse.projectcourse.exception.CustomException;
-import static com.projectcourse.projectcourse.helper.ResponseHelper.createFailedResponse;
+import com.projectcourse.projectcourse.helper.ResponseHelper;
 import com.projectcourse.projectcourse.helper.Util;
 import com.projectcourse.projectcourse.repository.CourseRepository;
 import com.projectcourse.projectcourse.repository.UserRepository;
+import com.projectcourse.projectcourse.response.ApiResponse;
 import com.projectcourse.projectcourse.response.FailedResponse;
 import com.projectcourse.projectcourse.response.Login;
 import com.projectcourse.projectcourse.response.Register;
@@ -42,7 +44,8 @@ public class UserService {
 
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    public User getUserByToken(String token) {
+    public User getUserByRequest(HttpServletRequest request) {
+        String token=Util.getToken(request);
         String email = jwtService.extractUsername(token);
         User user = userRepository.findByEmail(email).orElseThrow(() ->new CustomException("User Not Found" ,404 ));
         return user;
@@ -75,32 +78,28 @@ public class UserService {
 
     }
 
-    public Register updateUser(User user, Long userId) {
+    public ResponseEntity<?> updateUser(User user, Long userId , HttpServletRequest request) {
+        User loggedInUser=getUserByRequest(request);
         User existingUser = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         ;
-
+        if(loggedInUser.getId()!=userId) return ResponseHelper.createFailedResponse(new FailedResponse("You are not authorized to update this user"),HttpStatus.FORBIDDEN);
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             User userWithEmail = userRepository.findByEmail(user.getEmail())
                     .orElseThrow(() -> new RuntimeException("No user with given email"));
             if (!userId.equals(userWithEmail.getId())) {
-                return new Register("User with email " + user.getEmail() + " already exists", user);
+                return ResponseHelper.createFailedResponse(new FailedResponse("User with email "+ user.getEmail()+" already exist"),HttpStatus.CONFLICT);
             }
-
         }
-
         existingUser.setEmail(user.getEmail());
         existingUser.setName(user.getName());
-        existingUser.setPassword(user.getPassword());
+        existingUser.setPassword(encoder.encode(user.getPassword()));
         existingUser.setRole(user.getRole());
-
-        return new Register("User updated Successfully", userRepository.save(existingUser));
+        return ResponseHelper.createResponse(new ApiResponse<>("User updated successfully", userRepository.save(existingUser)), HttpStatus.OK);
 
     }
 
     public ResponseEntity<?> getAllUsers() {
-
         List<User> users = userRepository.findAll();
-
         if (users.isEmpty()) {
             throw new CustomException("No User Found" ,404 );
         }
@@ -109,9 +108,8 @@ public class UserService {
     }
 
     public ResponseEntity<?> getUserById(Long id , HttpServletRequest request) {
-        String token= Util.getToken(request);
-        User loggedInUser =getUserByToken(token);
-        if(loggedInUser.getId()!=id) return createFailedResponse(new FailedResponse("You are not authorized to access this user"),HttpStatus.FORBIDDEN);
+        User loggedInUser =getUserByRequest(request);
+        if(loggedInUser.getId()!=id && !loggedInUser.getRole().equals(Role.ADMIN)) return ResponseHelper.createFailedResponse(new FailedResponse("You are not authorized to access this user"),HttpStatus.FORBIDDEN);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new CustomException("User not found", 404));
         return ResponseEntity.ok(user);
@@ -123,9 +121,9 @@ public class UserService {
         return ResponseEntity.ok(user);
     }
 
-    public ResponseEntity<?> getEnrolledCourses(String token) {
+    public ResponseEntity<?> getEnrolledCourses(HttpServletRequest request) {
         try {
-            User user = getUserByToken(token);
+            User user = getUserByRequest(request);
             List<Course> enrolledCourse = user.getEnrolled().stream().map(Enrollment::getCourse).toList();
             return ResponseEntity.ok(enrolledCourse);
         } catch (Exception e) {
