@@ -3,6 +3,7 @@ package com.projectcourse.projectcourse.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -29,6 +30,29 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/add-user**", "/user/login").permitAll()
                         .anyRequest().authenticated())
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            response.setContentType("application/json");
+                            response.getWriter().write("""
+                                    {
+                                        "status": 401,
+                                        "error": "UNAUTHORIZED",
+                                        "message": "Authentication required"
+                                    }
+                                    """);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType("application/json");
+                            response.getWriter().write("""
+                                    {
+                                        "status": 403,
+                                        "error": "FORBIDDEN",
+                                        "message": "You are not authorized to access this resource"
+                                    }
+                                    """);
+                        }))
                 .httpBasic(Customizer.withDefaults())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
